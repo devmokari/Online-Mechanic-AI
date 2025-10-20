@@ -1,14 +1,31 @@
-.PHONY: install run build package deploy clean lint
+.PHONY: install run build package deploy clean lint venv
 
-install:
-	pip install -r requirements.txt
+VENV_DIR ?= .venv
+PYTHON ?= python3
 
-run:
-	python lambda_function.py
+ifeq ($(OS),Windows_NT)
+VENV_BIN := $(VENV_DIR)/Scripts
+else
+VENV_BIN := $(VENV_DIR)/bin
+endif
 
-build:
+VENV_PYTHON := $(VENV_BIN)/python
+PIP := $(VENV_PYTHON) -m pip
+
+venv: $(VENV_PYTHON)
+
+$(VENV_PYTHON):
+	$(PYTHON) -m venv $(VENV_DIR)
+
+install: venv
+	$(PIP) install -r requirements.txt
+
+run: install
+	$(VENV_PYTHON) lambda_function.py
+
+build: venv
 	mkdir -p build
-	pip install --target build -r requirements.txt
+	$(PIP) install --target build -r requirements.txt
 	cp -r lambda_function.py utils build/
 
 package: build
@@ -20,7 +37,7 @@ deploy: package
 	--zip-file fileb://lambda_package.zip
 
 clean:
-	rm -rf build lambda_package.zip
+	rm -rf build lambda_package.zip $(VENV_DIR)
 
-lint:
-	python -m compileall lambda_function.py utils
+lint: install
+	$(VENV_PYTHON) -m compileall lambda_function.py utils

@@ -1,5 +1,5 @@
 
-.PHONY: backend frontend deploy set-key create-bucket clean format
+.PHONY: backend frontend deploy set-key create-bucket clean format python-env
 
 backend:
 	cd backend && make build
@@ -30,3 +30,6 @@ clean:
 
 format:
 	cd frontend && npm run format
+
+python-env:
+	cd backend && make venv
