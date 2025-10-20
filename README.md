@@ -57,8 +57,8 @@ online-mechanic-ai/
 
 ## ⚙️ Prerequisites
 
-- Python ≥ 3.9
-- Node ≥ 18
+- Python ≥ 3.12
+- Node ≥ 20
 - AWS CLI configured (`aws configure`)
 - OpenAI API key (from [platform.openai.com/account/api-keys](https://platform.openai.com/account/api-keys))
 - AWS IAM role for Lambda with `S3FullAccess` + `LambdaFullAccess`
@@ -101,6 +101,21 @@ aws lambda update-function-configuration \
   --function-name mechanic-ai-lambda \
   --environment "Variables={OPENAI_API_KEY=$(KEY)}"
 ```
+
+---
+
+### 🪄 Creating the project S3 bucket
+
+Before uploading photos you need a private S3 bucket. Use the helper target to
+spin one up (it defaults to `us-east-1`, pass `REGION` if you prefer another):
+
+```bash
+make create-bucket BUCKET=mechanic-ai-uploads REGION=us-west-2
+```
+
+Under the hood this runs `backend/scripts/create_s3_bucket.py`, which safely
+skips creation if the bucket already exists and lets you override the canned
+ACL with `ACL=public-read` or similar when needed.
 
 ---
 
