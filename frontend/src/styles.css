@@ -1,0 +1,128 @@
+:root {
+  color-scheme: light dark;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #0f172a;
+  background-color: #f8fafc;
+}
+
+body {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+header h1 {
+  margin: 0;
+  font-size: clamp(1.75rem, 2.5vw, 2.5rem);
+}
+
+.upload-card,
+.response-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.upload-card h2,
+.response-card h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+textarea {
+  width: 100%;
+  min-height: 140px;
+  resize: vertical;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid #cbd5f5;
+  font-size: 1rem;
+}
+
+.upload-controls {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.upload-controls input[type='file'] {
+  border: 1px dashed #94a3b8;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #f1f5f9;
+}
+
+button.primary {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+button.primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+button.primary:not(:disabled):hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.result-section {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.result-section ul {
+  margin: 0.25rem 0 0;
+  padding-left: 1.2rem;
+}
+
+.badge {
+  display: inline-block;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-radius: 9999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+footer {
+  text-align: center;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.muted {
+  color: #94a3b8;
+}
