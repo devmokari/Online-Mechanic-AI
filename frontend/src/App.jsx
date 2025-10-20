@@ -3,19 +3,56 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 
-const initialState = {
+const createInitialState = () => ({
   summary: '',
   potential_causes: [],
   safety_checks: [],
   recommended_actions: [],
+});
+
+const toStringList = (value) => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => (typeof item === 'string' ? item : String(item ?? '')).trim())
+    .filter(Boolean);
 };
+
+const normaliseResult = (payload = {}) => ({
+  summary: typeof payload.summary === 'string' ? payload.summary : '',
+  potential_causes: toStringList(payload.potential_causes),
+  safety_checks: toStringList(payload.safety_checks),
+  recommended_actions: toStringList(payload.recommended_actions),
+});
+
+const readFileAsBase64 = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const { result } = reader;
+      if (typeof result !== 'string') {
+        reject(new Error('Failed to read selected file.'));
+        return;
+      }
+
+      const commaIndex = result.indexOf(',');
+      const base64 = commaIndex >= 0 ? result.slice(commaIndex + 1) : result;
+      resolve({ media: base64, filename: file.name });
+    };
+
+    reader.onerror = () => {
+      reject(reader.error ?? new Error('Failed to read selected file.'));
+    };
+
+    reader.readAsDataURL(file);
+  });
 
 function formatList(items) {
   if (!items?.length) return <p className="muted">No items returned.</p>;
   return (
     <ul>
-      {items.map((item) => (
-        <li key={item}>{item}</li>
+      {items.map((item, index) => (
+        <li key={`${item}-${index}`}>{item}</li>
       ))}
     </ul>
   );
@@ -28,7 +65,7 @@ function isVideoFile(file) {
 export default function App() {
   const [description, setDescription] = useState('');
   const [file, setFile] = useState(null);
-  const [result, setResult] = useState(initialState);
+  const [result, setResult] = useState(createInitialState);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -46,23 +83,27 @@ export default function App() {
     event.preventDefault();
     setLoading(true);
     setError('');
+    setResult(createInitialState());
 
     try {
       if (!API_URL) {
         throw new Error('API URL is not configured. Set VITE_API_URL in your environment.');
       }
 
+      const trimmedDescription = description.trim();
+      if (!trimmedDescription) {
+        throw new Error('Please describe the issue before submitting.');
+      }
+
       let media = null;
       let filename = null;
 
       if (file) {
-        const buffer = await file.arrayBuffer();
-        media = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-        filename = file.name;
+        ({ media, filename } = await readFileAsBase64(file));
       }
 
       const payload = {
-        description,
+        description: trimmedDescription,
         media,
         filename,
       };
@@ -71,12 +112,7 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
       });
 
-      setResult({
-        summary: data.summary ?? '',
-        potential_causes: data.potential_causes ?? [],
-        safety_checks: data.safety_checks ?? [],
-        recommended_actions: data.recommended_actions ?? [],
-      });
+      setResult(normaliseResult(data));
     } catch (err) {
       console.error(err);
       setError(
