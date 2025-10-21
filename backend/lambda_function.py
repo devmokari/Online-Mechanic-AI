@@ -91,20 +91,12 @@ class DiagnosticResponse:
 
 def _build_messages(request: DiagnosticRequest, media_object: Optional[S3Object]) -> list[Dict[str, Any]]:
     """Construct the multimodal chat messages for GPT-4o."""
-    content: list[Dict[str, Any]] = [
-        {
-            "type": "text",
-            "text": (
-                "You are an experienced automotive mechanic. Analyse the user's "
-                "description and the provided media to produce a concise "
-                "diagnostic report."
-            ),
-        },
+    user_content: list[Dict[str, Any]] = [
         {"type": "text", "text": f"User description: {request.description}"},
     ]
 
     if media_object:
-        content.append(
+        user_content.append(
             {
                 "type": "input_image",
                 "image_url": {
@@ -116,21 +108,52 @@ def _build_messages(request: DiagnosticRequest, media_object: Optional[S3Object]
     return [
         {
             "role": "system",
-            "content": content,
-        }
+            "content": (
+                "You are an experienced automotive mechanic. Analyse the user's "
+                "description and the provided media to produce a concise diagnostic "
+                "report."
+            ),
+        },
+        {
+            "role": "user",
+            "content": user_content,
+        },
     ]
 
 
 def _invoke_openai(messages: list[Dict[str, Any]]) -> DiagnosticResponse:
     client = _init_openai_client()
 
-    completion = client.responses.create(
-        model=OPENAI_MODEL,
-        input=messages,
-        max_output_tokens=800,
-    )
+    text: str = ""
 
-    text = completion.output_text.strip()
+    responses_api = getattr(client, "responses", None)
+    if responses_api and hasattr(responses_api, "create"):
+        completion = responses_api.create(
+            model=OPENAI_MODEL,
+            input=messages,
+            max_output_tokens=800,
+        )
+        text = getattr(completion, "output_text", "") or ""
+    else:
+        chat_api = getattr(client, "chat", None)
+        if not chat_api or not hasattr(chat_api, "completions"):
+            raise RuntimeError("OpenAI client does not support responses or chat completions APIs")
+
+        completion = chat_api.completions.create(
+            model=OPENAI_MODEL,
+            messages=messages,
+            max_tokens=800,
+        )
+
+        if completion.choices:
+            message = completion.choices[0].message
+            content = getattr(message, "content", "")
+            if isinstance(content, list):
+                text = "".join(part.get("text", "") for part in content if isinstance(part, dict))
+            else:
+                text = content or ""
+
+    text = text.strip()
     if not text:
         raise RuntimeError("OpenAI returned an empty response")
 
